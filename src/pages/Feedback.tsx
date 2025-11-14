@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FeedbackForm } from "@/components/FeedbackForm";
+import { FeedbackForm, FeedbackData } from "@/components/FeedbackForm";
 import { Navigation } from "@/components/Navigation";
 import { Review, Sentiment } from "@/components/ReviewCard";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -7,28 +7,38 @@ import heroBg from "@/assets/hero-bg.jpg";
 const Feedback = () => {
   const navigate = useNavigate();
 
-  // Simple sentiment analysis based on keywords
-  const analyzeSentiment = (message: string): Sentiment => {
-    const positive = ["great", "excellent", "amazing", "wonderful", "fantastic", "love", "perfect", "awesome", "best", "good"];
-    const negative = ["bad", "terrible", "awful", "poor", "worst", "hate", "disappointed", "useless"];
+  // Sentiment analysis based on rating and feedback text
+  const analyzeSentiment = (rating: number, improvement: string, favoriteSession: string): Sentiment => {
+    // Rating 4-5 is positive
+    if (rating >= 4) return "positive";
     
-    const lowerMessage = message.toLowerCase();
+    // Rating 1-2 is negative
+    if (rating <= 2) return "negative";
     
-    const positiveCount = positive.filter(word => lowerMessage.includes(word)).length;
-    const negativeCount = negative.filter(word => lowerMessage.includes(word)).length;
+    // For rating 3, check text sentiment
+    const positive = ["great", "excellent", "amazing", "wonderful", "fantastic", "love", "perfect", "awesome", "best", "good", "enjoyed"];
+    const negative = ["bad", "terrible", "awful", "poor", "worst", "hate", "disappointed", "useless", "boring", "confusing"];
+    
+    const combinedText = `${improvement} ${favoriteSession}`.toLowerCase();
+    
+    const positiveCount = positive.filter(word => combinedText.includes(word)).length;
+    const negativeCount = negative.filter(word => combinedText.includes(word)).length;
     
     if (positiveCount > negativeCount) return "positive";
     if (negativeCount > positiveCount) return "negative";
     return "neutral";
   };
 
-  const handleFeedbackSubmit = (feedback: { name: string; email: string; message: string }) => {
+  const handleFeedbackSubmit = (feedback: FeedbackData) => {
     const newReview: Review = {
       id: Date.now().toString(),
-      name: feedback.name,
       email: feedback.email,
-      message: feedback.message,
-      sentiment: analyzeSentiment(feedback.message),
+      rating: feedback.rating,
+      favoriteSession: feedback.favoriteSession,
+      improvement: feedback.improvement,
+      topics: feedback.topics,
+      otherTopic: feedback.otherTopic,
+      sentiment: analyzeSentiment(feedback.rating, feedback.improvement, feedback.favoriteSession),
       timestamp: new Date(),
     };
     
