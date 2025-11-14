@@ -1,14 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Minus, ThumbsDown } from "lucide-react";
+import { ThumbsUp, Minus, ThumbsDown, Star } from "lucide-react";
 
 export type Sentiment = "positive" | "neutral" | "negative";
 
 export interface Review {
   id: string;
-  name: string;
   email: string;
-  message: string;
+  rating: number;
+  favoriteSession: string;
+  improvement: string;
+  topics: string[];
+  otherTopic?: string;
   sentiment: Sentiment;
   timestamp: Date;
 }
@@ -43,8 +46,22 @@ export const ReviewCard = ({ review }: ReviewCardProps) => {
     <Card className="shadow-card hover:shadow-elegant transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{review.name}</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${
+                      star <= review.rating
+                        ? "fill-primary text-primary"
+                        : "fill-muted text-muted"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm font-medium">{review.rating}/5</span>
+            </div>
             <CardDescription>{review.email}</CardDescription>
           </div>
           <Badge 
@@ -60,9 +77,29 @@ export const ReviewCard = ({ review }: ReviewCardProps) => {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-foreground">{review.message}</p>
-        <p className="text-xs text-muted-foreground mt-4">
+      <CardContent className="space-y-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-1">💬 Favourite Session</p>
+          <p className="text-foreground">{review.favoriteSession}</p>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-1">🚀 Improvement Suggestion</p>
+          <p className="text-foreground">{review.improvement}</p>
+        </div>
+        
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-1">🎓 Interested Topics</p>
+          <div className="flex flex-wrap gap-2">
+            {review.topics.map((topic) => (
+              <Badge key={topic} variant="outline">
+                {topic === "Other" && review.otherTopic ? review.otherTopic : topic}
+              </Badge>
+            ))}
+          </div>
+        </div>
+        
+        <p className="text-xs text-muted-foreground pt-2 border-t">
           {review.timestamp.toLocaleDateString()} at {review.timestamp.toLocaleTimeString()}
         </p>
       </CardContent>

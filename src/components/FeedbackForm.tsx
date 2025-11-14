@@ -4,36 +4,91 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 
-interface FeedbackFormProps {
-  onSubmit: (feedback: { name: string; email: string; message: string }) => void;
+export interface FeedbackData {
+  email: string;
+  rating: number;
+  favoriteSession: string;
+  improvement: string;
+  topics: string[];
+  otherTopic?: string;
 }
 
+interface FeedbackFormProps {
+  onSubmit: (feedback: FeedbackData) => void;
+}
+
+const topicOptions = [
+  "AI & ML",
+  "Cloud Computing",
+  "Android & Flutter",
+  "Web & Frontend",
+  "Women Techmakers",
+  "Startups & Product",
+  "Other"
+];
+
 export const FeedbackForm = ({ onSubmit }: FeedbackFormProps) => {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [rating, setRating] = useState<string>("");
+  const [favoriteSession, setFavoriteSession] = useState("");
+  const [improvement, setImprovement] = useState("");
+  const [topics, setTopics] = useState<string[]>([]);
+  const [otherTopic, setOtherTopic] = useState("");
+
+  const handleTopicChange = (topic: string, checked: boolean) => {
+    if (checked) {
+      setTopics([...topics, topic]);
+    } else {
+      setTopics(topics.filter(t => t !== topic));
+      if (topic === "Other") {
+        setOtherTopic("");
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email || !message) {
+    if (!email || !rating || !favoriteSession || !improvement || topics.length === 0) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
     }
 
-    onSubmit({ name, email, message });
-    setName("");
+    if (topics.includes("Other") && !otherTopic) {
+      toast({
+        title: "Missing information",
+        description: "Please specify the other topic",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onSubmit({ 
+      email, 
+      rating: parseInt(rating), 
+      favoriteSession, 
+      improvement, 
+      topics,
+      otherTopic: topics.includes("Other") ? otherTopic : undefined
+    });
+    
     setEmail("");
-    setMessage("");
+    setRating("");
+    setFavoriteSession("");
+    setImprovement("");
+    setTopics([]);
+    setOtherTopic("");
     
     toast({
-      title: "Feedback submitted!",
+      title: "Feedback submitted! 🎉",
       description: "Thank you for your feedback",
     });
   };
@@ -41,41 +96,107 @@ export const FeedbackForm = ({ onSubmit }: FeedbackFormProps) => {
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <CardTitle>Share Your Feedback</CardTitle>
-        <CardDescription>We'd love to hear what you think about our service</CardDescription>
+        <CardTitle>DevFest Feedback 2025</CardTitle>
+        <CardDescription>
+          Thank you for joining DevFest! 💡<br/>
+          Your feedback helps us make next year even better. This form takes less than 1 minute
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Rating */}
+          <div className="space-y-3">
+            <Label className="text-base">⭐ Overall, how was your DevFest experience? <span className="text-destructive">*</span></Label>
+            <RadioGroup value={rating} onValueChange={setRating}>
+              <div className="flex gap-4 items-center">
+                <span className="text-sm text-muted-foreground">Lowest</span>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <div key={value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={value.toString()} id={`rating-${value}`} />
+                    <Label htmlFor={`rating-${value}`} className="cursor-pointer">{value}</Label>
+                  </div>
+                ))}
+                <span className="text-sm text-muted-foreground">Highest</span>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Favorite Session */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="favoriteSession" className="text-base">
+              💬 Favourite session or speaker? <span className="text-destructive">*</span>
+            </Label>
             <Input
-              id="name"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="favoriteSession"
+              placeholder="Your answer"
+              value={favoriteSession}
+              onChange={(e) => setFavoriteSession(e.target.value)}
+              required
             />
           </div>
+
+          {/* Improvement */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="improvement" className="text-base">
+              🚀 What's one thing we can improve next time? <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="improvement"
+              placeholder="Your answer"
+              value={improvement}
+              onChange={(e) => setImprovement(e.target.value)}
+              rows={3}
+              required
+            />
+          </div>
+
+          {/* Topics */}
+          <div className="space-y-3">
+            <Label className="text-base">
+              🎓 What topics would you like to see next year? <span className="text-destructive">*</span>
+            </Label>
+            <div className="space-y-3">
+              {topicOptions.map((topic) => (
+                <div key={topic} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={topic}
+                      checked={topics.includes(topic)}
+                      onCheckedChange={(checked) => handleTopicChange(topic, checked as boolean)}
+                    />
+                    <Label htmlFor={topic} className="cursor-pointer font-normal">
+                      {topic}
+                    </Label>
+                  </div>
+                  {topic === "Other" && topics.includes("Other") && (
+                    <Input
+                      placeholder="Please specify..."
+                      value={otherTopic}
+                      onChange={(e) => setOtherTopic(e.target.value)}
+                      className="ml-6"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-base">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="your@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="message">Your Feedback</Label>
-            <Textarea
-              id="message"
-              placeholder="Tell us what you think..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={5}
-            />
-          </div>
-          <Button type="submit" className="w-full">Submit Feedback</Button>
+
+          <Button type="submit" className="w-full" size="lg">Submit</Button>
         </form>
       </CardContent>
     </Card>
